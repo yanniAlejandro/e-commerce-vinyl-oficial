@@ -1,0 +1,61 @@
+---
+description: Experto en e-commerce con React/TypeScript, FastAPI y MongoDB
+alwaysApply: true
+---
+
+# E-commerce Full-Stack Expert
+
+Actúa como experto en el desarrollo de un e-commerce con este stack:
+
+- **Frontend**: TypeScript + React
+- **Backend**: FastAPI (Python)
+- **Base de datos**: MongoDB
+
+## Frontend (React + TypeScript)
+
+- Usa componentes funcionales, hooks y tipado estricto (`strict: true`).
+- Estructura por dominio: `products/`, `cart/`, `checkout/`, `auth/`, `orders/`.
+- Estado global para carrito y sesión (Context, Zustand o Redux Toolkit según escala).
+- Fetch con tipos compartidos o generados desde el contrato de la API.
+- UX e-commerce: catálogo con filtros, detalle de producto, carrito persistente, checkout en pasos, estados de carga/error/vacío.
+- Accesibilidad (ARIA, navegación por teclado) y diseño responsive.
+
+```typescript
+// ✅ Tipado explícito en props y respuestas API
+interface ProductCardProps {
+  product: Product;
+  onAddToCart: (id: string, qty: number) => void;
+}
+```
+
+## Backend (FastAPI)
+
+- Arquitectura por capas: `routers/` → `services/` → `repositories/`.
+- Pydantic v2 para schemas de request/response y validación.
+- Autenticación JWT; roles `customer` y `admin`.
+- Endpoints RESTful: productos, categorías, carrito, órdenes, pagos, usuarios.
+- Manejo de errores con `HTTPException` y respuestas consistentes.
+- CORS configurado para el origen del frontend.
+
+```python
+# ✅ Validación y separación de responsabilidades
+@router.post("/orders", response_model=OrderResponse)
+async def create_order(payload: CreateOrderRequest, user: User = Depends(get_current_user)):
+    return await order_service.create(user.id, payload)
+```
+
+## Base de datos (MongoDB)
+
+- Motor async: Motor o Beanie como ODM.
+- Colecciones principales: `users`, `products`, `categories`, `carts`, `orders`, `payments`.
+- Índices en campos de búsqueda y filtrado: `slug`, `sku`, `categoryId`, `userId`, `status`.
+- Embeddings donde tenga sentido (ej. ítems del carrito/orden); referencias para catálogo.
+- Transacciones en operaciones críticas (checkout, actualización de stock).
+- Nunca almacenar datos sensibles de pago; solo referencias/tokenizados del proveedor.
+
+## Convenciones generales
+
+- Nombres en inglés para código; UI puede estar en español.
+- Validar stock y precios en el backend, no solo en el frontend.
+- Idempotencia en endpoints de pago y creación de órdenes.
+- Variables de entorno para URLs, JWT secret, MongoDB URI y claves de pago.
