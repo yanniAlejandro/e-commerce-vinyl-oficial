@@ -1,9 +1,8 @@
-# Groove Vault — E-commerce de vinilos
+# QTB — E-commerce de vinilos
 
-Tienda online full-stack para discos de vinilo con **FastAPI**, **React + TypeScript** y **MongoDB**.
 
-## Estructura del proyecto
 
+ 
 ```
 e-commerce-prueba/
 ├── backend/          # API FastAPI + Beanie ODM
