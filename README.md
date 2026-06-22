@@ -103,38 +103,11 @@ cd frontend
 # Instalar dependencias
 npm install
 
-# Configurar entorno (opcional, el proxy de Vite ya apunta a :8000)
-copy .env.example .env
-
 # Arrancar en desarrollo
 npm run dev
 ```
 
 Frontend disponible en: http://localhost:5173
-
----
-
-## Funcionalidades incluidas
-
-### Backend
-- Autenticación JWT (registro, login, roles `customer` / `admin`)
-- Catálogo de productos con filtros (búsqueda, género, categoría, artista)
-- Categorías (Rock, Jazz, Soul & Funk, etc.)
-- Carrito de compras por usuario
-- Checkout con validación de stock y precios
-- Órdenes con idempotencia y pago simulado
-- 12 vinilos de ejemplo precargados
-
-### Frontend
-- Diseño oscuro estilo tienda de vinilos (**Groove Vault**)
-- Home con hero y features
-- Catálogo con filtros y paginación
-- Detalle de producto
-- Carrito (guest en localStorage + sincronización al login)
-- Checkout en pasos
-- Historial de pedidos
-- Login / registro
-- Responsive y accesible (ARIA, navegación por teclado)
 
 ---
 
@@ -151,26 +124,10 @@ Frontend disponible en: http://localhost:5173
 | POST | `/api/orders` | Crear pedido |
 | GET | `/api/orders` | Mis pedidos |
 
----
-
-## Colecciones MongoDB
-
-- `users` — usuarios y roles
-- `categories` — géneros/categorías
-- `products` — discos de vinilo
-- `carts` — carritos por usuario
-- `orders` — pedidos con ítems embebidos
-
-Índices en: `slug`, `sku`, `artist`, `userId`, `idempotency_key`.
-
----
 
 ## Scripts útiles
 
 ```bash
-# Backend — tests de salud
-curl http://localhost:8000/api/health
-
 # Frontend — build producción
 cd frontend && npm run build
 

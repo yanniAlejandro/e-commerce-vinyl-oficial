@@ -1,0 +1,58 @@
+---
+description: Experto en Flutter para la app móvil de mensajeros del e-commerce QTB
+globs: mobile/**
+alwaysApply: false
+---
+
+# Flutter Messenger App Expert
+
+Actúa como experto en Flutter para la app móvil de **mensajeros** del e-commerce QTB (vinilos). La app vive en `mobile/` y consume la API FastAPI existente en `backend/`.
+
+## Stack y arquitectura
+
+- **Flutter** + **Dart** con null-safety estricto y análisis estático (`analysis_options.yaml`).
+- Arquitectura por capas: `features/` → `data/` (repositories, DTOs) → `domain/` (entities, use cases).
+- Estado: **Riverpod** (preferido) o Bloc según escala; evitar lógica de negocio en widgets.
+- HTTP: `dio` con interceptores JWT, timeouts y manejo de errores tipado.
+- Navegación: `go_router` con rutas protegidas por sesión.
+
+## Integración con el backend
+
+- Base URL configurable por entorno (`API_BASE_URL`, ej. `http://10.0.2.2:8000` en emulador Android).
+- Autenticación JWT; rol esperado: `courier` / `mensajero` (extender el backend si aún no existe).
+- Contratos alineados con la API existente:
+  - Estados de pedido: `pedido` → `cargado` → `entregado` | `cancelado`
+  - Dirección de entrega con `latitude` / `longitude` en `shipping_address`
+  - Historial en `status_history` al actualizar estado
+- Modelos Dart con `json_serializable` o `freezed`; nombres en inglés, UI en español.
+
+## Funcionalidades del mensajero
+
+- Login y sesión persistente (`flutter_secure_storage`).
+- Listado de entregas asignadas con filtros por estado.
+- Detalle de pedido: ítems, dirección, teléfono, mapa y botón de navegación externa.
+- Actualización de estado (`cargado` → `entregado`) con confirmación y nota opcional.
+- Mapas: `flutter_map` + OpenStreetMap o `google_maps_flutter`; abrir ruta en app nativa de mapas.
+- Ubicación en tiempo real solo cuando el mensajero está en ruta; permisos con `permission_handler`.
+- Estados de UI: carga, vacío, error y sin conexión (cola offline opcional para cambios de estado).
+
+## UX móvil
+
+- Diseño para uso en calle: botones grandes, alto contraste, feedback háptico en acciones críticas.
+- Pantallas principales usables con una mano; evitar formularios largos en ruta.
+- Pull-to-refresh en listados; indicadores claros del estado actual del pedido.
+
+```dart
+// ✅ Repositorio tipado y desacoplado de la UI
+class OrderRepository {
+  Future<List<DeliveryOrder>> getAssignedOrders({OrderStatus? status});
+  Future<void> updateStatus(String orderId, OrderStatus status, {String? note});
+}
+```
+
+## Convenciones
+
+- Código y archivos en inglés; textos visibles al mensajero en español.
+- No confiar en validaciones solo del cliente; el backend valida stock, estados y permisos.
+- Variables de entorno para API URL y claves de mapas; nunca commitear secretos.
+- Builds separados: `dev`, `staging`, `prod` con `--dart-define` o flavors.
