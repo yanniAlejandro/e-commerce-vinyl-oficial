@@ -69,6 +69,7 @@ export interface Cart {
 
 export type OrderStatus =
   | 'pedido'
+  | 'recogida'
   | 'cargado'
   | 'entregado'
   | 'cancelado'
@@ -116,6 +117,9 @@ export interface Order {
   status_history: StatusHistoryEntry[];
   shipping_address: ShippingAddress;
   payment_reference: string;
+  courier_id?: string | null;
+  assigned_at?: string | null;
+  delivery_deadline?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -124,6 +128,7 @@ export interface AdminOrder extends Order {
   user_id: string;
   customer_name: string;
   customer_email: string;
+  courier_name?: string | null;
 }
 
 export interface ProductCreatePayload {

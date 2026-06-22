@@ -9,12 +9,21 @@ class Settings(BaseSettings):
     jwt_secret: str = "dev-secret-change-in-production"
     jwt_algorithm: str = "HS256"
     jwt_expire_minutes: int = 1440
-    cors_origins: str = "http://localhost:5173"
+    cors_origins: str = "http://localhost:5173,http://localhost:8000"
     manager_email: str = "zummer.alternative@gmail.com"
     cloudinary_cloud_name: str = ""
     cloudinary_api_key: str = ""
     cloudinary_api_secret: str = ""
     cloudinary_folder: str = "qtb/covers"
+    otp_length: int = 6
+    otp_expire_minutes: int = 10
+    otp_resend_cooldown_seconds: int = 60
+    smtp_host: str = ""
+    smtp_port: int = 587
+    smtp_user: str = ""
+    smtp_password: str = ""
+    smtp_from: str = ""
+    smtp_use_tls: bool = True
 
     @property
     def cors_origins_list(self) -> list[str]:

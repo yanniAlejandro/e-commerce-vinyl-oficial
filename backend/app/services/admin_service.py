@@ -1,13 +1,14 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from fastapi import HTTPException, status
 
 from app.models.category import Category
 from app.models.order import Order, OrderStatus, StatusHistoryEntry
 from app.models.product import Product
-from app.models.user import User
+from app.models.user import User, UserRole
 from app.schemas.order import (
     AdminOrderResponse,
+    AssignCourierRequest,
     OrderItemResponse,
     OrderResponse,
     ShippingAddressResponse,
@@ -36,9 +37,20 @@ async def _order_to_response(order: Order) -> OrderResponse:
             status=entry.status,
             changed_at=entry.changed_at,
             note=entry.note,
+            changed_by=entry.changed_by,
+            changed_by_role=entry.changed_by_role,
         )
         for entry in order.status_history
     ]
+    evidence = None
+    if order.delivery_evidence:
+        from app.schemas.order import DeliveryEvidenceResponse
+
+        evidence = DeliveryEvidenceResponse(
+            photo_urls=order.delivery_evidence.photo_urls,
+            signature_url=order.delivery_evidence.signature_url,
+            completed_at=order.delivery_evidence.completed_at,
+        )
     return OrderResponse(
         id=str(order.id),
         items=items,
@@ -51,6 +63,10 @@ async def _order_to_response(order: Order) -> OrderResponse:
             order.shipping_address.model_dump()
         ),
         payment_reference=order.payment_reference,
+        courier_id=order.courier_id,
+        assigned_at=order.assigned_at,
+        delivery_deadline=order.delivery_deadline,
+        delivery_evidence=evidence,
         created_at=order.created_at,
         updated_at=order.updated_at,
     )
@@ -58,11 +74,16 @@ async def _order_to_response(order: Order) -> OrderResponse:
 
 async def _order_to_admin_response(order: Order, user: User | None) -> AdminOrderResponse:
     base = await _order_to_response(order)
+    courier_name = None
+    if order.courier_id:
+        courier = await User.get(order.courier_id)
+        courier_name = courier.full_name if courier else None
     return AdminOrderResponse(
         **base.model_dump(),
         user_id=order.user_id,
         customer_name=user.full_name if user else order.shipping_address.full_name,
         customer_email=user.email if user else "",
+        courier_name=courier_name,
     )
 
 
@@ -146,6 +167,7 @@ async def list_all_orders(status: OrderStatus | None = None) -> list[AdminOrderR
 
 ACTIVE_STATUSES = {
     OrderStatus.PEDIDO,
+    OrderStatus.RECOGIDA,
     OrderStatus.CARGADO,
     OrderStatus.ENTREGADO,
     OrderStatus.CANCELADO,
@@ -160,13 +182,55 @@ async def update_order_status(order_id: str, payload: UpdateOrderStatusRequest) 
     if payload.status not in ACTIVE_STATUSES:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid status. Use: pedido, cargado, entregado, cancelado",
+            detail="Invalid status. Use: pedido, recogida, cargado, entregado, cancelado",
         )
 
     order.status = payload.status
     order.updated_at = datetime.utcnow()
     order.status_history.append(
         StatusHistoryEntry(status=payload.status, note=payload.note or "Actualizado por admin")
+    )
+    await order.save()
+
+    user = await User.get(order.user_id)
+    return await _order_to_admin_response(order, user)
+
+
+async def list_couriers() -> list[dict]:
+    couriers = await User.find(User.role == UserRole.COURIER, User.is_active == True).to_list()
+    return [
+        {
+            "id": str(c.id),
+            "full_name": c.full_name,
+            "username": c.username,
+            "email": c.email,
+            "vehicle_type": c.vehicle_type.value if c.vehicle_type else None,
+        }
+        for c in couriers
+    ]
+
+
+async def assign_courier_to_order(order_id: str, payload: AssignCourierRequest) -> AdminOrderResponse:
+    order = await Order.get(order_id)
+    if not order:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Order not found")
+
+    courier = await User.get(payload.courier_id)
+    if not courier or courier.role != UserRole.COURIER:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Courier not found")
+
+    deadline = payload.delivery_deadline or (datetime.utcnow() + timedelta(hours=48))
+    order.courier_id = str(courier.id)
+    order.assigned_at = datetime.utcnow()
+    order.delivery_deadline = deadline
+    order.updated_at = datetime.utcnow()
+    order.status_history.append(
+        StatusHistoryEntry(
+            status=order.status,
+            note=payload.note or f"Asignado a {courier.full_name}",
+            changed_by="admin",
+            changed_by_role="admin",
+        )
     )
     await order.save()
 

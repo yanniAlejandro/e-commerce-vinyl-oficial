@@ -2,10 +2,12 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from pathlib import Path
 
 from app.config import settings
 from app.database import close_db, connect_db
-from app.routers import admin, auth, cart, categories, orders, products
+from app.routers import admin, auth, cart, categories, courier, courier_auth, orders, products
 
 
 @asynccontextmanager
@@ -36,6 +38,12 @@ app.include_router(products.router, prefix="/api")
 app.include_router(cart.router, prefix="/api")
 app.include_router(orders.router, prefix="/api")
 app.include_router(admin.router, prefix="/api")
+app.include_router(courier_auth.router, prefix="/api")
+app.include_router(courier.router, prefix="/api")
+
+uploads_path = Path("uploads")
+uploads_path.mkdir(exist_ok=True)
+app.mount("/uploads", StaticFiles(directory=str(uploads_path)), name="uploads")
 
 
 @app.get("/api/health")

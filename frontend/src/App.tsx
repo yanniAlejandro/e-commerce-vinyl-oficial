@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { AdminOrdersPage } from './admin/pages/AdminOrdersPage';
 import { AdminProductsPage } from './admin/pages/AdminProductsPage';
+import { AdminSettingsPage } from './admin/pages/AdminSettingsPage';
 import { LoginPage } from './auth/pages/LoginPage';
 import { RegisterPage } from './auth/pages/RegisterPage';
 import { useAuthStore } from './auth/store/authStore';
@@ -83,6 +84,14 @@ export default function App() {
           element={
             <AdminRoute>
               <AdminOrdersPage />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/admin/configuracion"
+          element={
+            <AdminRoute>
+              <AdminSettingsPage />
             </AdminRoute>
           }
         />

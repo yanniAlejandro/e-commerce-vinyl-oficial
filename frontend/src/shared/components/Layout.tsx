@@ -38,6 +38,9 @@ export function Layout({ children }: LayoutProps) {
                 <Link to="/admin/pedidos" className={location.pathname.startsWith('/admin/pedidos') ? 'active' : ''}>
                   Admin pedidos
                 </Link>
+                <Link to="/admin/configuracion" className={location.pathname.startsWith('/admin/configuracion') ? 'active' : ''}>
+                  Configuración
+                </Link>
               </>
             )}
           </nav>

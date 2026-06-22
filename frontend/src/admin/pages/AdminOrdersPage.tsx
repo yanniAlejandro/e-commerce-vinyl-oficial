@@ -9,21 +9,42 @@ import { formatDate, formatPrice } from '../../shared/utils/format';
 
 export function AdminOrdersPage() {
   const [orders, setOrders] = useState<AdminOrder[]>([]);
+  const [couriers, setCouriers] = useState<Array<{ id: string; full_name: string; username: string | null }>>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<OrderStatus | ''>('');
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [assigningId, setAssigningId] = useState<string | null>(null);
 
   const load = async () => {
     setLoading(true);
     const params = filter ? `?status=${filter}` : '';
-    const data = await apiRequest<AdminOrder[]>(`/admin/orders${params}`);
+    const [data, courierList] = await Promise.all([
+      apiRequest<AdminOrder[]>(`/admin/orders${params}`),
+      apiRequest<Array<{ id: string; full_name: string; username: string | null }>>('/admin/couriers'),
+    ]);
     setOrders(data);
+    setCouriers(courierList);
     setLoading(false);
   };
 
   useEffect(() => {
     void load();
   }, [filter]);
+
+  const assignCourier = async (orderId: string, courierId: string) => {
+    if (!courierId) return;
+    setAssigningId(orderId);
+    try {
+      const deadline = new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString();
+      await apiRequest<AdminOrder>(`/admin/orders/${orderId}/assign`, {
+        method: 'PATCH',
+        body: JSON.stringify({ courier_id: courierId, delivery_deadline: deadline }),
+      });
+      await load();
+    } finally {
+      setAssigningId(null);
+    }
+  };
 
   const updateStatus = async (orderId: string, status: OrderStatus) => {
     setUpdatingId(orderId);
@@ -89,6 +110,23 @@ export function AdminOrdersPage() {
                 title="Ruta de entrega"
               />
             )}
+
+            <div className="admin-order-card__status">
+              <label htmlFor={`courier-${order.id}`} className="label">Asignar mensajero</label>
+              <select
+                id={`courier-${order.id}`}
+                value={order.courier_id ?? ''}
+                disabled={assigningId === order.id || couriers.length === 0}
+                onChange={(e) => void assignCourier(order.id, e.target.value)}
+              >
+                <option value="">{order.courier_name ? order.courier_name : 'Sin asignar'}</option>
+                {couriers.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.full_name} {c.username ? `(@${c.username})` : ''}
+                  </option>
+                ))}
+              </select>
+            </div>
 
             <div className="admin-order-card__status">
               <label htmlFor={`status-${order.id}`} className="label">Cambiar estado</label>

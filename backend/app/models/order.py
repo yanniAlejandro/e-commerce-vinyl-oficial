@@ -7,6 +7,7 @@ from pydantic import BaseModel, Field
 
 class OrderStatus(str, Enum):
     PEDIDO = "pedido"
+    RECOGIDA = "recogida"
     CARGADO = "cargado"
     ENTREGADO = "entregado"
     CANCELADO = "cancelado"
@@ -43,6 +44,14 @@ class StatusHistoryEntry(BaseModel):
     status: OrderStatus
     changed_at: datetime = Field(default_factory=datetime.utcnow)
     note: str = ""
+    changed_by: str = ""
+    changed_by_role: str = ""
+
+
+class DeliveryEvidence(BaseModel):
+    photo_urls: list[str] = Field(default_factory=list)
+    signature_url: str = ""
+    completed_at: datetime | None = None
 
 
 class Order(Document):
@@ -56,6 +65,10 @@ class Order(Document):
     shipping_address: ShippingAddress
     payment_reference: str = ""
     idempotency_key: Indexed(str, unique=True)
+    courier_id: str | None = None
+    assigned_at: datetime | None = None
+    delivery_deadline: datetime | None = None
+    delivery_evidence: DeliveryEvidence | None = None
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 

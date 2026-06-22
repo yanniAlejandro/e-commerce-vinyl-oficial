@@ -1,11 +1,15 @@
 """Seed script for vinyl shop database."""
 import asyncio
+from datetime import datetime, timedelta
 
 from app.config import settings
 from app.core.security import hash_password
 from app.database import connect_db, close_db
 from app.models.category import Category
+from app.models.order import Order, OrderItem, OrderStatus, ShippingAddress, StatusHistoryEntry
+from app.models.pending_courier import AvailabilitySlot, VehicleType
 from app.models.product import Product, VinylFormat
+from app.models.settings import AppSettings
 from app.models.user import User, UserRole
 
 CATEGORIES = [
@@ -243,6 +247,77 @@ async def seed() -> None:
         )
         await demo.insert()
         print("Created demo user: demo@vinylshop.com / demo1234")
+
+    courier = await User.find_one(User.email == "mensajero@qtb.cu")
+    if not courier:
+        courier = User(
+            email="mensajero@qtb.cu",
+            username="mensajero_habana",
+            hashed_password=hash_password("mensajero1234"),
+            full_name="Carlos Mensajero",
+            role=UserRole.COURIER,
+            vehicle_type=VehicleType.MOTORCYCLE,
+            availability=[
+                AvailabilitySlot(day_of_week=0, start_time="08:00", end_time="18:00"),
+                AvailabilitySlot(day_of_week=1, start_time="08:00", end_time="18:00"),
+                AvailabilitySlot(day_of_week=2, start_time="08:00", end_time="18:00"),
+                AvailabilitySlot(day_of_week=3, start_time="08:00", end_time="18:00"),
+                AvailabilitySlot(day_of_week=4, start_time="08:00", end_time="18:00"),
+            ],
+            email_verified=True,
+        )
+        await courier.insert()
+        print("Created courier user: mensajero@qtb.cu / mensajero1234 (login: mensajero_habana)")
+
+    settings_doc = await AppSettings.find_one(AppSettings.key == "default")
+    if not settings_doc:
+        settings_doc = AppSettings()
+        await settings_doc.insert()
+        print("Created default warehouse settings (La Habana)")
+
+    if demo and courier:
+        existing_assigned = await Order.find_one(Order.courier_id == str(courier.id))
+        if not existing_assigned:
+            product = await Product.find_one()
+            if product:
+                order = Order(
+                    user_id=str(demo.id),
+                    items=[
+                        OrderItem(
+                            product_id=str(product.id),
+                            name=product.name,
+                            artist=product.artist,
+                            price=product.price,
+                            quantity=1,
+                            image_url=product.image_url,
+                        )
+                    ],
+                    subtotal=product.price,
+                    shipping=5.99,
+                    total=round(product.price + 5.99, 2),
+                    status=OrderStatus.PEDIDO,
+                    status_history=[
+                        StatusHistoryEntry(status=OrderStatus.PEDIDO, note="Pedido de prueba asignado")
+                    ],
+                    shipping_address=ShippingAddress(
+                        full_name="Usuario Demo",
+                        street="Calle Mercaderes 123",
+                        city="La Habana",
+                        state="La Habana",
+                        postal_code="10100",
+                        country="CU",
+                        phone="+53 5 1234567",
+                        latitude=23.1370,
+                        longitude=-82.3510,
+                    ),
+                    payment_reference="mock_pay_seed001",
+                    idempotency_key="seed-order-courier-001",
+                    courier_id=str(courier.id),
+                    assigned_at=datetime.utcnow(),
+                    delivery_deadline=datetime.utcnow() + timedelta(hours=24),
+                )
+                await order.insert()
+                print("Created sample assigned order for courier")
 
     await close_db()
     print("Seed completed successfully!")

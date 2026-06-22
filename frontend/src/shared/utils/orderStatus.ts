@@ -1,5 +1,6 @@
 export type OrderStatus =
   | 'pedido'
+  | 'recogida'
   | 'cargado'
   | 'entregado'
   | 'cancelado'
@@ -17,6 +18,7 @@ export interface StatusHistoryEntry {
 
 export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
   pedido: 'Pedido',
+  recogida: 'En recogida',
   cargado: 'Cargado',
   entregado: 'Entregado',
   cancelado: 'Cancelado',
@@ -29,6 +31,7 @@ export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
 
 export const ACTIVE_ORDER_STATUSES: OrderStatus[] = [
   'pedido',
+  'recogida',
   'cargado',
   'entregado',
   'cancelado',

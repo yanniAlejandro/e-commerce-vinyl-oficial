@@ -35,9 +35,20 @@ def _order_to_response(order: Order) -> OrderResponse:
             status=entry.status,
             changed_at=entry.changed_at,
             note=entry.note,
+            changed_by=entry.changed_by,
+            changed_by_role=entry.changed_by_role,
         )
         for entry in (order.status_history or [])
     ]
+    evidence = None
+    if order.delivery_evidence:
+        from app.schemas.order import DeliveryEvidenceResponse
+
+        evidence = DeliveryEvidenceResponse(
+            photo_urls=order.delivery_evidence.photo_urls,
+            signature_url=order.delivery_evidence.signature_url,
+            completed_at=order.delivery_evidence.completed_at,
+        )
     return OrderResponse(
         id=str(order.id),
         items=items,
@@ -50,6 +61,10 @@ def _order_to_response(order: Order) -> OrderResponse:
             order.shipping_address.model_dump()
         ),
         payment_reference=order.payment_reference,
+        courier_id=order.courier_id,
+        assigned_at=order.assigned_at,
+        delivery_deadline=order.delivery_deadline,
+        delivery_evidence=evidence,
         created_at=order.created_at,
         updated_at=getattr(order, "updated_at", order.created_at),
     )

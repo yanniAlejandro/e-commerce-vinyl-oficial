@@ -7,7 +7,7 @@ interface OrderStatusTimelineProps {
   currentStatus: StatusHistoryEntry['status'];
 }
 
-const FLOW: Array<StatusHistoryEntry['status']> = ['pedido', 'cargado', 'entregado'];
+const FLOW: Array<StatusHistoryEntry['status']> = ['pedido', 'recogida', 'cargado', 'entregado'];
 
 export function OrderStatusTimeline({ history, currentStatus }: OrderStatusTimelineProps) {
   const normalized = normalizeOrderStatus(currentStatus);
