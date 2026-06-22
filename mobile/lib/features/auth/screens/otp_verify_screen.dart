@@ -6,6 +6,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/network/dio_client.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_typography.dart';
+import '../../../core/widgets/qtb_widgets.dart';
 import '../data/auth_repository.dart';
 import '../providers/auth_provider.dart';
 
@@ -63,6 +66,8 @@ class _OtpVerifyScreenState extends ConsumerState<OtpVerifyScreen> {
     try {
       await ref.read(authStateProvider.notifier).completeOtp(widget.email, _codeCtrl.text.trim());
       if (mounted) context.go('/deliveries');
+    } on DioException catch (e) {
+      setState(() => _error = extractErrorMessage(e));
     } catch (e) {
       setState(() => _error = e.toString());
     } finally {
@@ -78,7 +83,7 @@ class _OtpVerifyScreenState extends ConsumerState<OtpVerifyScreen> {
       _startTimer();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Código reenviado')),
+          const SnackBar(content: Text('CÓDIGO REENVIADO')),
         );
       }
     } on DioException catch (e) {
@@ -88,56 +93,48 @@ class _OtpVerifyScreenState extends ConsumerState<OtpVerifyScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Verificar email')),
-      body: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              'Enviamos un código OTP a\n${widget.email}',
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            const SizedBox(height: 32),
-            TextField(
-              controller: _codeCtrl,
-              keyboardType: TextInputType.number,
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 28, letterSpacing: 8),
-              decoration: const InputDecoration(
-                labelText: 'Código OTP',
-                hintText: '000000',
-              ),
-              maxLength: 6,
-            ),
-            if (_error != null) ...[
-              const SizedBox(height: 8),
-              Text(_error!, style: const TextStyle(color: Colors.red), textAlign: TextAlign.center),
-            ],
-            const SizedBox(height: 24),
-            ElevatedButton(
-              onPressed: _loading ? null : _verify,
-              child: _loading
-                  ? const SizedBox(
-                      height: 24,
-                      width: 24,
-                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                    )
-                  : const Text('Verificar'),
-            ),
-            const SizedBox(height: 12),
-            TextButton(
+    return QtbAuthShell(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text('Verificar email', style: AppTypography.serifTitle(context, size: 36)),
+          const SizedBox(height: 12),
+          Text(
+            'Código enviado a\n${widget.email}',
+            textAlign: TextAlign.center,
+            style: AppTypography.body(color: AppColors.textMuted),
+          ),
+          const SizedBox(height: 32),
+          QtbTextField(
+            label: 'Código OTP',
+            controller: _codeCtrl,
+            keyboardType: TextInputType.number,
+            maxLength: 6,
+            textAlign: TextAlign.center,
+            style: AppTypography.mono(size: 28, letterSpacing: 8),
+          ),
+          if (_error != null) ...[
+            const SizedBox(height: 16),
+            QtbErrorBanner(_error!),
+          ],
+          const SizedBox(height: 28),
+          QtbPrimaryButton(label: 'Verificar', loading: _loading, onPressed: _verify),
+          const SizedBox(height: 12),
+          Center(
+            child: TextButton(
               onPressed: _secondsLeft > 0 ? null : _resend,
               child: Text(
                 _secondsLeft > 0
-                    ? 'Reenviar código (${_secondsLeft}s)'
-                    : 'Reenviar código',
+                    ? 'REENVIAR CÓDIGO (${_secondsLeft}S)'
+                    : 'REENVIAR CÓDIGO',
+                style: AppTypography.mono(
+                  size: 11,
+                  color: _secondsLeft > 0 ? AppColors.textMuted.withValues(alpha: 0.4) : AppColors.textMuted,
+                ),
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

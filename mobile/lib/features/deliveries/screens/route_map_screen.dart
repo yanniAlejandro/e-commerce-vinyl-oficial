@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_typography.dart';
+import '../../../core/widgets/qtb_widgets.dart';
+import '../models/route_map_args.dart';
 import '../utils/location_utils.dart';
-import 'delivery_detail_screen.dart';
 
 class RouteMapScreen extends StatefulWidget {
   const RouteMapScreen({super.key, required this.args});
@@ -60,11 +63,13 @@ class _RouteMapScreenState extends State<RouteMapScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(widget.args.title)),
+      appBar: AppBar(
+        title: Text(widget.args.title.toUpperCase(), style: AppTypography.mono(size: 12)),
+      ),
       body: _loading
-          ? const Center(child: CircularProgressIndicator())
+          ? const QtbSpinner(label: 'Calculando ruta')
           : _error != null
-              ? Center(child: Text(_error!))
+              ? QtbEmptyState(title: 'Sin ruta', subtitle: _error)
               : FlutterMap(
                   mapController: _mapController,
                   options: MapOptions(
@@ -73,7 +78,8 @@ class _RouteMapScreenState extends State<RouteMapScreen> {
                   ),
                   children: [
                     TileLayer(
-                      urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                      urlTemplate: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+                      subdomains: const ['a', 'b', 'c', 'd'],
                       userAgentPackageName: 'com.qtb.messenger',
                     ),
                     if (_route.isNotEmpty)
@@ -81,8 +87,8 @@ class _RouteMapScreenState extends State<RouteMapScreen> {
                         polylines: [
                           Polyline(
                             points: _route,
-                            strokeWidth: 4,
-                            color: Theme.of(context).colorScheme.secondary,
+                            strokeWidth: 3,
+                            color: AppColors.text,
                           ),
                         ],
                       ),
@@ -93,13 +99,13 @@ class _RouteMapScreenState extends State<RouteMapScreen> {
                             point: _current!,
                             width: 40,
                             height: 40,
-                            child: const Icon(Icons.delivery_dining, color: Colors.blue, size: 36),
+                            child: const Icon(Icons.delivery_dining, color: AppColors.text, size: 32),
                           ),
                         Marker(
                           point: widget.args.destination,
                           width: 40,
                           height: 40,
-                          child: const Icon(Icons.place, color: Colors.red, size: 36),
+                          child: const Icon(Icons.place, color: AppColors.accentRed, size: 32),
                         ),
                       ],
                     ),

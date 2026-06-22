@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/network/dio_client.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/widgets/qtb_widgets.dart';
 import '../data/auth_repository.dart';
 import '../models/courier_user.dart';
 
@@ -94,63 +96,81 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Registro de mensajero')),
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => context.pop(),
+        ),
+        title: const QtbLogo(size: 18),
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
           child: Form(
             key: _formKey,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                TextFormField(
+                const QtbPageHeader(
+                  label: 'Mensajeros',
+                  title: 'Registro',
+                  subtitle: 'Únete a la red de reparto QTB',
+                ),
+                if (_error != null) ...[
+                  QtbErrorBanner(_error!),
+                  const SizedBox(height: 20),
+                ],
+                QtbTextField(
+                  label: 'Nombre de usuario',
                   controller: _usernameCtrl,
-                  decoration: const InputDecoration(labelText: 'Nombre de usuario'),
                   validator: (v) => v == null || v.length < 3 ? 'Mínimo 3 caracteres' : null,
                 ),
-                const SizedBox(height: 12),
-                TextFormField(
+                const SizedBox(height: 16),
+                QtbTextField(
+                  label: 'Nombre completo',
                   controller: _nameCtrl,
-                  decoration: const InputDecoration(labelText: 'Nombre completo'),
                   validator: (v) => v == null || v.length < 2 ? 'Ingresa tu nombre' : null,
                 ),
-                const SizedBox(height: 12),
-                TextFormField(
+                const SizedBox(height: 16),
+                QtbTextField(
+                  label: 'Email',
                   controller: _emailCtrl,
                   keyboardType: TextInputType.emailAddress,
-                  decoration: const InputDecoration(labelText: 'Email'),
                   validator: (v) => v == null || !v.contains('@') ? 'Email inválido' : null,
                 ),
-                const SizedBox(height: 12),
-                TextFormField(
+                const SizedBox(height: 16),
+                QtbTextField(
+                  label: 'Contraseña',
                   controller: _passwordCtrl,
                   obscureText: true,
-                  decoration: const InputDecoration(labelText: 'Contraseña'),
                   validator: (v) => v == null || v.length < 8 ? 'Mínimo 8 caracteres' : null,
                 ),
-                const SizedBox(height: 12),
-                TextFormField(
+                const SizedBox(height: 16),
+                QtbTextField(
+                  label: 'Repetir contraseña',
                   controller: _confirmCtrl,
                   obscureText: true,
-                  decoration: const InputDecoration(labelText: 'Repetir contraseña'),
                   validator: (v) =>
                       v != _passwordCtrl.text ? 'Las contraseñas no coinciden' : null,
                 ),
-                const SizedBox(height: 20),
-                const Text('Tipo de vehículo', style: TextStyle(fontWeight: FontWeight.w600)),
+                const SizedBox(height: 24),
+                const QtbLabel('Tipo de vehículo'),
                 const SizedBox(height: 8),
                 DropdownButtonFormField<String>(
                   value: _vehicleType,
+                  dropdownColor: AppColors.surface,
                   items: _vehicleTypes.entries
                       .map((e) => DropdownMenuItem(value: e.key, child: Text(e.value)))
                       .toList(),
                   onChanged: (v) => setState(() => _vehicleType = v!),
+                  decoration: const InputDecoration(),
                 ),
-                const SizedBox(height: 20),
-                const Text('Disponibilidad', style: TextStyle(fontWeight: FontWeight.w600)),
-                const SizedBox(height: 8),
+                const SizedBox(height: 24),
+                const QtbLabel('Disponibilidad'),
+                const SizedBox(height: 12),
                 Wrap(
                   spacing: 8,
+                  runSpacing: 8,
                   children: List.generate(7, (i) {
                     final selected = _selectedDays.contains(i);
                     return FilterChip(
@@ -166,7 +186,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                     );
                   }),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 16),
                 Row(
                   children: [
                     Expanded(
@@ -175,7 +195,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                           final t = await showTimePicker(context: context, initialTime: _startTime);
                           if (t != null) setState(() => _startTime = t);
                         },
-                        child: Text('Desde ${_formatTime(_startTime)}'),
+                        child: Text('DESDE ${_formatTime(_startTime)}'),
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -185,25 +205,16 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                           final t = await showTimePicker(context: context, initialTime: _endTime);
                           if (t != null) setState(() => _endTime = t);
                         },
-                        child: Text('Hasta ${_formatTime(_endTime)}'),
+                        child: Text('HASTA ${_formatTime(_endTime)}'),
                       ),
                     ),
                   ],
                 ),
-                if (_error != null) ...[
-                  const SizedBox(height: 12),
-                  Text(_error!, style: const TextStyle(color: Colors.red)),
-                ],
-                const SizedBox(height: 24),
-                ElevatedButton(
-                  onPressed: _loading ? null : _submit,
-                  child: _loading
-                      ? const SizedBox(
-                          height: 24,
-                          width: 24,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                        )
-                      : const Text('Enviar solicitud'),
+                const SizedBox(height: 28),
+                QtbPrimaryButton(
+                  label: 'Enviar solicitud',
+                  loading: _loading,
+                  onPressed: _submit,
                 ),
               ],
             ),

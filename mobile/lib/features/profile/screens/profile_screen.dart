@@ -4,6 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/network/dio_client.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_typography.dart';
+import '../../../core/widgets/qtb_widgets.dart';
 import '../../auth/data/auth_repository.dart';
 import '../../auth/providers/auth_provider.dart';
 
@@ -43,7 +46,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       await ref.read(authStateProvider.notifier).refreshProfile();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Nombre actualizado')),
+          const SnackBar(content: Text('NOMBRE ACTUALIZADO')),
         );
       }
     } on DioException catch (e) {
@@ -73,7 +76,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       _confirmPassCtrl.clear();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Contraseña actualizada')),
+          const SnackBar(content: Text('CONTRASEÑA ACTUALIZADA')),
         );
       }
     } on DioException catch (e) {
@@ -97,75 +100,89 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     }
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Mi perfil')),
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => context.pop(),
+        ),
+        title: const QtbLogo(size: 18),
+      ),
       body: ListView(
-        padding: const EdgeInsets.all(20),
         children: [
-          if (user != null) ...[
-            ListTile(
-              leading: const CircleAvatar(child: Icon(Icons.person)),
-              title: Text(user.fullName),
-              subtitle: Text('@${user.username ?? ''} · ${user.email}'),
+          const QtbPageHeader(
+            label: 'Cuenta',
+            title: 'Mi perfil',
+          ),
+          if (user != null)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(user.fullName, style: AppTypography.body(size: 18)),
+                  const SizedBox(height: 4),
+                  Text(
+                    '@${user.username ?? ''} · ${user.email}',
+                    style: AppTypography.mono(size: 11, color: AppColors.textMuted),
+                  ),
+                ],
+              ),
             ),
-            const Divider(height: 32),
-          ],
-          const Text('Editar nombre', style: TextStyle(fontWeight: FontWeight.w600)),
-          const SizedBox(height: 8),
-          TextField(
-            controller: _nameCtrl,
-            decoration: const InputDecoration(labelText: 'Nombre completo'),
-          ),
-          const SizedBox(height: 12),
-          ElevatedButton(
-            onPressed: _savingName ? null : _saveName,
-            child: _savingName
-                ? const SizedBox(
-                    height: 20,
-                    width: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                  )
-                : const Text('Guardar nombre'),
-          ),
-          const Divider(height: 40),
-          const Text('Cambiar contraseña', style: TextStyle(fontWeight: FontWeight.w600)),
-          const SizedBox(height: 8),
-          TextField(
-            controller: _currentPassCtrl,
-            obscureText: true,
-            decoration: const InputDecoration(labelText: 'Contraseña actual'),
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            controller: _newPassCtrl,
-            obscureText: true,
-            decoration: const InputDecoration(labelText: 'Nueva contraseña'),
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            controller: _confirmPassCtrl,
-            obscureText: true,
-            decoration: const InputDecoration(labelText: 'Confirmar nueva contraseña'),
-          ),
-          const SizedBox(height: 12),
-          ElevatedButton(
-            onPressed: _savingPass ? null : _changePassword,
-            child: _savingPass
-                ? const SizedBox(
-                    height: 20,
-                    width: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                  )
-                : const Text('Actualizar contraseña'),
-          ),
-          if (_error != null) ...[
-            const SizedBox(height: 16),
-            Text(_error!, style: const TextStyle(color: Colors.red)),
-          ],
-          const SizedBox(height: 32),
-          OutlinedButton.icon(
-            onPressed: _logout,
-            icon: const Icon(Icons.logout),
-            label: const Text('Cerrar sesión'),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const QtbLabel('Editar nombre'),
+                const SizedBox(height: 12),
+                QtbTextField(label: 'Nombre completo', controller: _nameCtrl),
+                const SizedBox(height: 12),
+                QtbPrimaryButton(
+                  label: 'Guardar nombre',
+                  loading: _savingName,
+                  onPressed: _saveName,
+                ),
+                const SizedBox(height: 32),
+                Container(height: 1, color: AppColors.border),
+                const SizedBox(height: 32),
+                const QtbLabel('Cambiar contraseña'),
+                const SizedBox(height: 12),
+                QtbTextField(
+                  label: 'Contraseña actual',
+                  controller: _currentPassCtrl,
+                  obscureText: true,
+                ),
+                const SizedBox(height: 16),
+                QtbTextField(
+                  label: 'Nueva contraseña',
+                  controller: _newPassCtrl,
+                  obscureText: true,
+                ),
+                const SizedBox(height: 16),
+                QtbTextField(
+                  label: 'Confirmar nueva contraseña',
+                  controller: _confirmPassCtrl,
+                  obscureText: true,
+                ),
+                const SizedBox(height: 12),
+                QtbPrimaryButton(
+                  label: 'Actualizar contraseña',
+                  loading: _savingPass,
+                  onPressed: _changePassword,
+                ),
+                if (_error != null) ...[
+                  const SizedBox(height: 16),
+                  QtbErrorBanner(_error!),
+                ],
+                const SizedBox(height: 32),
+                QtbOutlineButton(
+                  label: 'Cerrar sesión',
+                  icon: Icons.logout,
+                  onPressed: _logout,
+                ),
+                const SizedBox(height: 32),
+              ],
+            ),
           ),
         ],
       ),

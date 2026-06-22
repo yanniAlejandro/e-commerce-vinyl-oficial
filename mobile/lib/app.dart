@@ -12,7 +12,7 @@ class QtbMessengerApp extends ConsumerWidget {
     final router = ref.watch(routerProvider);
     return MaterialApp.router(
       title: 'QTB Mensajeros',
-      theme: AppTheme.light,
+      theme: AppTheme.dark,
       routerConfig: router,
       debugShowCheckedModeBanner: false,
     );

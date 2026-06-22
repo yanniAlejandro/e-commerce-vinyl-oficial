@@ -4,6 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/network/dio_client.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_typography.dart';
+import '../../../core/widgets/qtb_widgets.dart';
 import '../providers/auth_provider.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
@@ -50,75 +53,50 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const SizedBox(height: 48),
-                Text(
-                  'QTB Mensajeros',
-                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Reparto de vinilos en La Habana',
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        color: Colors.grey[600],
-                      ),
-                ),
-                const SizedBox(height: 48),
-                TextFormField(
-                  controller: _loginCtrl,
-                  decoration: const InputDecoration(
-                    labelText: 'Usuario o email',
-                    prefixIcon: Icon(Icons.person),
-                  ),
-                  validator: (v) =>
-                      v == null || v.trim().length < 3 ? 'Ingresa tu usuario o email' : null,
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _passwordCtrl,
-                  obscureText: true,
-                  decoration: const InputDecoration(
-                    labelText: 'Contraseña',
-                    prefixIcon: Icon(Icons.lock),
-                  ),
-                  validator: (v) =>
-                      v == null || v.length < 8 ? 'Mínimo 8 caracteres' : null,
-                ),
-                if (_error != null) ...[
-                  const SizedBox(height: 12),
-                  Text(_error!, style: const TextStyle(color: Colors.red)),
-                ],
-                const SizedBox(height: 24),
-                ElevatedButton(
-                  onPressed: _loading ? null : _submit,
-                  child: _loading
-                      ? const SizedBox(
-                          height: 24,
-                          width: 24,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                        )
-                      : const Text('Iniciar sesión'),
-                ),
-                const SizedBox(height: 16),
-                TextButton(
-                  onPressed: () => context.push('/register'),
-                  child: const Text('¿Nuevo mensajero? Regístrate'),
-                ),
-              ],
+    return QtbAuthShell(
+      child: Form(
+        key: _formKey,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text('Acceso', style: AppTypography.serifTitle(context)),
+            const SizedBox(height: 8),
+            Text(
+              'Mensajeros · La Habana',
+              style: AppTypography.mono(size: 11, color: AppColors.textMuted, letterSpacing: 0.8),
             ),
-          ),
+            const SizedBox(height: 28),
+            if (_error != null) ...[
+              QtbErrorBanner(_error!),
+              const SizedBox(height: 20),
+            ],
+            QtbTextField(
+              label: 'Usuario o email',
+              controller: _loginCtrl,
+              validator: (v) =>
+                  v == null || v.trim().length < 3 ? 'Ingresa tu usuario o email' : null,
+            ),
+            const SizedBox(height: 20),
+            QtbTextField(
+              label: 'Contraseña',
+              controller: _passwordCtrl,
+              obscureText: true,
+              validator: (v) => v == null || v.length < 8 ? 'Mínimo 8 caracteres' : null,
+            ),
+            const SizedBox(height: 28),
+            QtbPrimaryButton(
+              label: 'Entrar',
+              loading: _loading,
+              onPressed: _submit,
+            ),
+            const SizedBox(height: 20),
+            Center(
+              child: QtbGhostButton(
+                label: '¿Nuevo mensajero? Regístrate',
+                onPressed: () => context.push('/register'),
+              ),
+            ),
+          ],
         ),
       ),
     );

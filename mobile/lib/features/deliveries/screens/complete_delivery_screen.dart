@@ -8,6 +8,8 @@ import 'package:image_picker/image_picker.dart';
 import 'package:signature/signature.dart';
 
 import '../../../core/network/dio_client.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/widgets/qtb_widgets.dart';
 import '../data/deliveries_repository.dart';
 import '../providers/deliveries_provider.dart';
 
@@ -23,9 +25,9 @@ class CompleteDeliveryScreen extends ConsumerStatefulWidget {
 class _CompleteDeliveryScreenState extends ConsumerState<CompleteDeliveryScreen> {
   final _picker = ImagePicker();
   final _signatureCtrl = SignatureController(
-    penStrokeWidth: 3,
-    penColor: Colors.black,
-    exportBackgroundColor: Colors.white,
+    penStrokeWidth: 2,
+    penColor: AppColors.bg,
+    exportBackgroundColor: AppColors.text,
   );
   final List<Uint8List> _photos = [];
   bool _submitting = false;
@@ -46,13 +48,13 @@ class _CompleteDeliveryScreenState extends ConsumerState<CompleteDeliveryScreen>
   Future<void> _submit() async {
     if (_photos.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Agrega al menos una foto de evidencia')),
+        const SnackBar(content: Text('AGREGA AL MENOS UNA FOTO')),
       );
       return;
     }
     if (_signatureCtrl.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('El cliente debe firmar')),
+        const SnackBar(content: Text('EL CLIENTE DEBE FIRMAR')),
       );
       return;
     }
@@ -70,14 +72,14 @@ class _CompleteDeliveryScreenState extends ConsumerState<CompleteDeliveryScreen>
       ref.invalidate(deliveriesProvider);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Entrega completada')),
+          const SnackBar(content: Text('ENTREGA COMPLETADA')),
         );
         context.go('/deliveries');
       }
     } on DioException catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(extractErrorMessage(e))),
+          SnackBar(content: Text(extractErrorMessage(e).toUpperCase())),
         );
       }
     } finally {
@@ -88,83 +90,95 @@ class _CompleteDeliveryScreenState extends ConsumerState<CompleteDeliveryScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Completar entrega')),
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => context.pop(),
+        ),
+        title: const QtbLogo(size: 18),
+      ),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.only(bottom: 32),
         children: [
-          const Text(
-            'Fotos de evidencia',
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+          const QtbPageHeader(
+            label: 'Entrega',
+            title: 'Evidencia',
+            subtitle: 'Fotos y firma del cliente',
           ),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              ..._photos.asMap().entries.map(
-                    (e) => Stack(
-                      children: [
-                        Image.memory(e.value, width: 80, height: 80, fit: BoxFit.cover),
-                        Positioned(
-                          right: 0,
-                          child: IconButton(
-                            icon: const Icon(Icons.close, size: 18),
-                            onPressed: () => setState(() => _photos.removeAt(e.key)),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const QtbLabel('Fotos de evidencia'),
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    ..._photos.asMap().entries.map(
+                          (e) => Stack(
+                            children: [
+                              Container(
+                                decoration: BoxDecoration(
+                                  border: Border.all(color: AppColors.border),
+                                ),
+                                child: Image.memory(e.value, width: 80, height: 80, fit: BoxFit.cover),
+                              ),
+                              Positioned(
+                                right: 0,
+                                top: 0,
+                                child: IconButton(
+                                  icon: const Icon(Icons.close, size: 16, color: AppColors.text),
+                                  onPressed: () => setState(() => _photos.removeAt(e.key)),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                      ],
+                    OutlinedButton.icon(
+                      onPressed: () => _addPhoto(ImageSource.camera),
+                      icon: const Icon(Icons.camera_alt_outlined, size: 18),
+                      label: const Text('CÁMARA'),
+                    ),
+                    OutlinedButton.icon(
+                      onPressed: () => _addPhoto(ImageSource.gallery),
+                      icon: const Icon(Icons.photo_outlined, size: 18),
+                      label: const Text('GALERÍA'),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 28),
+                const QtbLabel('Firma del cliente'),
+                const SizedBox(height: 12),
+                Container(
+                  height: 200,
+                  decoration: BoxDecoration(
+                    border: Border.all(color: AppColors.borderStrong),
+                    color: AppColors.text,
+                  ),
+                  child: ClipRect(
+                    child: Signature(
+                      controller: _signatureCtrl,
+                      backgroundColor: AppColors.text,
                     ),
                   ),
-              OutlinedButton.icon(
-                onPressed: () => _addPhoto(ImageSource.camera),
-                icon: const Icon(Icons.camera_alt),
-                label: const Text('Cámara'),
-              ),
-              OutlinedButton.icon(
-                onPressed: () => _addPhoto(ImageSource.gallery),
-                icon: const Icon(Icons.photo),
-                label: const Text('Galería'),
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-          const Text(
-            'Firma del cliente',
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-          ),
-          const SizedBox(height: 8),
-          Container(
-            height: 200,
-            decoration: BoxDecoration(
-              border: Border.all(color: Colors.grey),
-              borderRadius: BorderRadius.circular(12),
-              color: Colors.white,
+                ),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: QtbGhostButton(
+                    label: 'Limpiar firma',
+                    onPressed: () => _signatureCtrl.clear(),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                QtbPrimaryButton(
+                  label: 'Confirmar entrega',
+                  loading: _submitting,
+                  onPressed: _submit,
+                ),
+              ],
             ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(12),
-              child: Signature(
-                controller: _signatureCtrl,
-                backgroundColor: Colors.white,
-              ),
-            ),
-          ),
-          Align(
-            alignment: Alignment.centerRight,
-            child: TextButton(
-              onPressed: () => _signatureCtrl.clear(),
-              child: const Text('Limpiar firma'),
-            ),
-          ),
-          const SizedBox(height: 24),
-          ElevatedButton(
-            onPressed: _submitting ? null : _submit,
-            child: _submitting
-                ? const SizedBox(
-                    height: 24,
-                    width: 24,
-                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                  )
-                : const Text('Confirmar entrega'),
           ),
         ],
       ),
